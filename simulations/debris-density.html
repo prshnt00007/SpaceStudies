@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Debris Density - Kessler Syndrome Explorer</title>
+<style>
+ body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;margin:0;background:#0b1020;color:#e8ecf6;}
+ header{background:#111735;padding:20px 16px;text-align:center;}
+ header a{color:#9aa4c7;font-size:0.85rem;text-decoration:none;}
+ main{max-width:420px;margin:0 auto;padding:16px;}
+ h1{font-size:1.15rem;text-align:center;margin:8px 0 16px;}
+ .card{background:#151b3b;border:1px solid #262e57;border-radius:12px;padding:16px;margin-bottom:16px;}
+ canvas{background:#05070f;border-radius:10px;display:block;margin:0 auto;}
+ label{display:block;font-size:0.85rem;color:#9aa4c7;margin:10px 0 4px;}
+ input[type=range]{width:100%;}
+ button{background:#3d5afe;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:0.9rem;margin-top:10px;}
+ .risk{font-size:1rem;font-weight:600;margin-top:10px;text-align:center;padding:8px;border-radius:8px;}
+ p.explain{font-size:0.85rem;color:#9aa4c7;line-height:1.5;}
+ #log{font-size:0.85rem;color:#c3c9e8;margin-top:10px;min-height:20px;}
+</style>
+</head>
+<body>
+<header>
+ <a href="../index.html">&larr; Back to Companion Home</a>
+</header>
+<main>
+ <h1>Debris Density and Kessler Syndrome</h1>
+ <div class="card">
+  <canvas id="debrisCanvas" width="320" height="320"></canvas>
+  <label for="countSlider">Objects tracked in this LEO shell: <span id="countVal">30</span></label>
+  <input type="range" id="countSlider" min="5" max="100" step="1" value="30">
+  <div class="risk" id="riskLabel">Low collision risk</div>
+  <button id="cascadeBtn">Simulate a cascade event</button>
+  <div id="log"></div>
+ </div>
+ <div class="card">
+  <p class="explain">This is a simplified, illustrative model, not a scientific prediction. It is meant to build intuition about Kessler Syndrome: as the density of debris in an orbital shell rises, the chance that a collision creates new fragments (which can then trigger further collisions) increases sharply. Drag the slider to raise the object count, then press "Simulate a cascade event" to see how a single collision can multiply at high densities. Real orbital debris modeling accounts for object size, relative velocity, altitude shell, and much more.</p>
+ </div>
+</main>
+<script>
+var canvas = document.getElementById('debrisCanvas');
+var ctx = canvas.getContext('2d');
+var W = canvas.width, H = canvas.height;
+var dots = [];
+var countSlider = document.getElementById('countSlider');
+var countVal = document.getElementById('countVal');
+var riskLabel = document.getElementById('riskLabel');
+var logEl = document.getElementById('log');
+
+function regenerate(count){
+  dots = [];
+  for(var i=0;i<count;i++){
+    dots.push({x: Math.random()*W, y: Math.random()*H});
+  }
+}
+
+function riskProbability(count){
+  var p = Math.pow(count/100, 2);
+  return Math.min(1, p);
+}
+
+function updateRiskLabel(count){
+  var p = riskProbability(count);
+  var text, bg;
+  if(p < 0.15){ text = 'Low collision risk (' + (p*100).toFixed(0) + '%)'; bg = '#1b3a2b'; }
+  else if(p < 0.4){ text = 'Moderate collision risk (' + (p*100).toFixed(0) + '%)'; bg = '#3a3a1b'; }
+  else if(p < 0.7){ text = 'High collision risk (' + (p*100).toFixed(0) + '%)'; bg = '#3a2a1b'; }
+  else { text = 'Cascade risk zone (' + (p*100).toFixed(0) + '%)'; bg = '#3a1b1b'; }
+  riskLabel.textContent = text;
+  riskLabel.style.background = bg;
+}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#2f7cf6';
+  ctx.beginPath();
+  ctx.arc(W/2, H/2, 26, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#e8ecf6';
+  for(var i=0;i<dots.length;i++){
+    ctx.beginPath();
+    ctx.arc(dots[i].x, dots[i].y, 2.2, 0, Math.PI*2);
+    ctx.fill();
+  }
+}
+
+countSlider.addEventListener('input', function(ev){
+  var count = parseInt(ev.target.value, 10);
+  countVal.textContent = count;
+  regenerate(count);
+  updateRiskLabel(count);
+  draw();
+  logEl.textContent = '';
+});
+
+document.getElementById('cascadeBtn').addEventListener('click', function(){
+  var count = parseInt(countSlider.value, 10);
+  var p = riskProbability(count);
+  var steps = 0;
+  var created = 0;
+  var maxDots = 260;
+  function step(){
+    if(steps >= 10 || dots.length >= maxDots){
+      logEl.textContent = created > 0
+        ? ('Cascade simulation complete: ' + created + ' new fragments created from secondary collisions.')
+        : 'No secondary collisions triggered at this density.';
+      return;
+    }
+    steps++;
+    if(Math.random() < p && dots.length < maxDots){
+      var idx = Math.floor(Math.random()*dots.length);
+      var origin = dots[idx];
+      var fragments = 1 + Math.floor(Math.random()*3);
+      for(var f=0; f<fragments && dots.length < maxDots; f++){
+        dots.push({
+          x: Math.min(W, Math.max(0, origin.x + (Math.random()-0.5)*40)),
+          y: Math.min(H, Math.max(0, origin.y + (Math.random()-0.5)*40))
+        });
+        created++;
+      }
+      draw();
+    }
+    setTimeout(step, 220);
+  }
+  step();
+});
+
+regenerate(parseInt(countSlider.value,10));
+updateRiskLabel(parseInt(countSlider.value,10));
+draw();
+</script>
+</body>
+</html>
