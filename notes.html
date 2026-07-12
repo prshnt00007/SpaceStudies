@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekly Notes - SPST501 Companion</title>
+<style>
+ body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;margin:0;background:#0b1020;color:#e8ecf6;}
+ header{background:#111735;padding:20px 16px;text-align:center;}
+ header a{color:#9aa4c7;font-size:0.85rem;text-decoration:none;}
+ main{max-width:680px;margin:0 auto;padding:16px;}
+ .card{background:#151b3b;border:1px solid #262e57;border-radius:12px;padding:18px;margin-bottom:16px;}
+ h1{font-size:1.3rem;margin:6px 0 4px;}
+ .desc{color:#c3c9e8;line-height:1.5;font-size:0.95rem;}
+ textarea{width:100%;min-height:220px;background:#0e1330;color:#e8ecf6;border:1px solid #2c3566;border-radius:8px;padding:10px;font-size:0.95rem;box-sizing:border-box;font-family:inherit;}
+ .row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+ .nav a{background:#1d254a;color:#e8ecf6;text-decoration:none;padding:8px 14px;border-radius:8px;font-size:0.9rem;}
+ .status{font-size:0.8rem;color:#7ee787;opacity:0;transition:opacity .3s;}
+ .status.show{opacity:1;}
+ .key{margin-top:16px;}
+ .key h2{font-size:0.95rem;margin-bottom:6px;color:#9aa4c7;}
+ .key ul{margin:0;padding-left:18px;color:#c3c9e8;font-size:0.9rem;}
+</style>
+</head>
+<body>
+<header>
+ <a href="index.html">&larr; Back to Companion Home</a>
+</header>
+<main>
+ <div class="card">
+  <div id="weekLabel" style="color:#7c8ae0;font-size:0.85rem;letter-spacing:.05em;text-transform:uppercase;">Week</div>
+  <h1 id="title"></h1>
+  <div class="desc" id="desc"></div>
+  <div class="key">
+   <h2>Key concepts to capture (edit freely below)</h2>
+   <ul>
+    <li>Define new terms in your own words</li>
+    <li>Note one question you still have</li>
+    <li>Link it back to a concentration: Astronomy, Aerospace Science, Space Policy, or Space Entrepreneurship</li>
+   </ul>
+  </div>
+ </div>
+ <div class="card">
+  <textarea id="notes" placeholder="Type your notes here. They are saved automatically in this browser."></textarea>
+  <div class="row">
+    <span class="status" id="status">Saved</span>
+  </div>
+ </div>
+ <div class="row nav">
+  <a id="prevLink" href="#">&larr; Previous week</a>
+  <a href="index.html">All weeks</a>
+  <a id="nextLink" href="#">Next week &rarr;</a>
+ </div>
+</main>
+<script>
+var WEEKS = [
+ null,
+ {title:"Introduce Yourself", desc:"Kick off the course: introduce yourself to classmates and the instructor, and share your background and goals for the Space Studies program."},
+ {title:"Scientific Writing", desc:"Focus on graduate-level scientific and technical writing conventions, plus the importance of the peer-review process in scientific literature."},
+ {title:"The Role of Commercial Companies in Space Exploration", desc:"Explore how commercial companies are reshaping access to space alongside NASA, and weigh the balance between public and private efforts."},
+ {title:"Debris Reduction in LEO", desc:"Examine preventative methods and proposed cleanup approaches for reducing orbital debris in Low Earth Orbit."},
+ {title:"Planetary Protection", desc:"Consider the policies and practices designed to prevent biological contamination of other worlds, and of Earth."},
+ {title:"Space Tourism", desc:"Discuss the growth, ethics, and future of commercial human spaceflight for private citizens."},
+ {title:"Mining, Resource Use, Conservation and Ownership", desc:"Debate the legal and ethical questions raised by extracting and owning resources from celestial bodies."},
+ {title:"Components of a Thesis, Course Reflection, and Capstone Options", desc:"Learn the main components of a thesis, reflect on the course, and consider your capstone options going forward."}
+];
+function getWeek(){
+  var params = new URLSearchParams(window.location.search);
+  var w = parseInt(params.get('week'), 10);
+  if(!w || w < 1) w = 1;
+  if(w > 8) w = 8;
+  return w;
+}
+var week = getWeek();
+var data = WEEKS[week];
+document.getElementById('weekLabel').textContent = 'Week ' + week + ' of 8';
+document.getElementById('title').textContent = data.title;
+document.getElementById('desc').textContent = data.desc;
+var key = 'spst501-week-' + week;
+var textarea = document.getElementById('notes');
+textarea.value = localStorage.getItem(key) || '';
+var statusEl = document.getElementById('status');
+var saveTimer = null;
+textarea.addEventListener('input', function(){
+  if(saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(function(){
+    localStorage.setItem(key, textarea.value);
+    statusEl.classList.add('show');
+    setTimeout(function(){ statusEl.classList.remove('show'); }, 1200);
+  }, 400);
+});
+var prevLink = document.getElementById('prevLink');
+var nextLink = document.getElementById('nextLink');
+if(week <= 1){ prevLink.style.visibility = 'hidden'; } else { prevLink.href = 'notes.html?week=' + (week - 1); }
+if(week >= 8){ nextLink.style.visibility = 'hidden'; } else { nextLink.href = 'notes.html?week=' + (week + 1); }
+</script>
+</body>
+</html>
+
