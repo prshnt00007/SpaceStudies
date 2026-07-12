@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delta-v Rocket Equation Calculator</title>
+<style>
+ body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;margin:0;background:#0b1020;color:#e8ecf6;}
+ header{background:#111735;padding:20px 16px;text-align:center;}
+ header a{color:#9aa4c7;font-size:0.85rem;text-decoration:none;}
+ main{max-width:440px;margin:0 auto;padding:16px;}
+ h1{font-size:1.15rem;text-align:center;margin:8px 0 16px;}
+ .card{background:#151b3b;border:1px solid #262e57;border-radius:12px;padding:16px;margin-bottom:16px;}
+ label{display:block;font-size:0.85rem;color:#9aa4c7;margin:10px 0 4px;}
+ input[type=number]{width:100%;box-sizing:border-box;background:#0e1330;color:#e8ecf6;border:1px solid #2c3566;border-radius:8px;padding:8px;font-size:0.95rem;}
+ .result{font-size:1.4rem;font-weight:700;text-align:center;margin:14px 0 4px;color:#7ee787;}
+ .bars{margin-top:10px;}
+ .bar-row{display:flex;align-items:center;margin:8px 0;font-size:0.8rem;}
+ .bar-label{width:120px;color:#9aa4c7;flex-shrink:0;}
+ .bar-track{flex:1;background:#0e1330;border-radius:6px;overflow:hidden;height:16px;position:relative;}
+ .bar-fill{height:100%;background:#3d5afe;}
+ .bar-fill.you{background:#7ee787;}
+ .bar-value{margin-left:8px;width:60px;font-size:0.8rem;color:#c3c9e8;}
+ p.explain{font-size:0.85rem;color:#9aa4c7;line-height:1.5;}
+</style>
+</head>
+<body>
+<header>
+ <a href="../index.html">&larr; Back to Companion Home</a>
+</header>
+<main>
+ <h1>Delta-v: The Rocket Equation</h1>
+ <div class="card">
+  <label for="isp">Specific impulse, Isp (seconds)</label>
+  <input type="number" id="isp" value="311">
+  <label for="m0">Initial (wet) mass, m0 (kg)</label>
+  <input type="number" id="m0" value="30000">
+  <label for="mf">Final (dry) mass, mf (kg)</label>
+  <input type="number" id="mf" value="9000">
+  <div class="result" id="result">-- km/s</div>
+  <div class="bars" id="bars"></div>
+ </div>
+ <div class="card">
+  <p class="explain">This uses the Tsiolkovsky rocket equation: delta-v = Isp x 9.80665 x ln(m0/mf). The reference bars below are commonly cited approximate delta-v budgets for context, not exact figures for any specific mission. Try lowering the final mass (more propellant burned relative to the rocket) and watch delta-v rise sharply - this is why staging (dropping empty mass) is so valuable in real rockets.</p>
+ </div>
+</main>
+<script>
+var refs = [
+  {label:"LEO to GEO transfer", value: 4.3},
+  {label:"LEO to Trans-Lunar", value: 3.1},
+  {label:"Earth surface to LEO", value: 9.4},
+  {label:"LEO to Mars transfer", value: 3.8}
+];
+var maxScale = 12;
+
+function render(){
+  var isp = parseFloat(document.getElementById('isp').value);
+  var m0 = parseFloat(document.getElementById('m0').value);
+  var mf = parseFloat(document.getElementById('mf').value);
+  var dv = 0;
+  if(isp > 0 && m0 > 0 && mf > 0 && m0 > mf){
+    dv = isp * 9.80665 * Math.log(m0/mf) / 1000;
+  }
+  document.getElementById('result').textContent = dv.toFixed(2) + ' km/s';
+
+  var barsHtml = '';
+  barsHtml += '<div class="bar-row"><div class="bar-label">Your rocket</div><div class="bar-track"><div class="bar-fill you" style="width:' + Math.min(100, dv/maxScale*100) + '%"></div></div><div class="bar-value">' + dv.toFixed(1) + '</div></div>';
+  for(var i=0;i<refs.length;i++){
+    var pct = Math.min(100, refs[i].value/maxScale*100);
+    barsHtml += '<div class="bar-row"><div class="bar-label">' + refs[i].label + '</div><div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div><div class="bar-value">' + refs[i].value.toFixed(1) + '</div></div>';
+  }
+  document.getElementById('bars').innerHTML = barsHtml;
+}
+
+document.getElementById('isp').addEventListener('input', render);
+document.getElementById('m0').addEventListener('input', render);
+document.getElementById('mf').addEventListener('input', render);
+render();
+</script>
+</body>
+</html>
