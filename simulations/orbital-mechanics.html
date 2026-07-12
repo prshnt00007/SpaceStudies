@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orbital Mechanics - Kepler Visualizer</title>
+<style>
+ body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;margin:0;background:#0b1020;color:#e8ecf6;}
+ header{background:#111735;padding:20px 16px;text-align:center;}
+ header a{color:#9aa4c7;font-size:0.85rem;text-decoration:none;}
+ main{max-width:420px;margin:0 auto;padding:16px;}
+ h1{font-size:1.15rem;text-align:center;margin:8px 0 16px;}
+ .card{background:#151b3b;border:1px solid #262e57;border-radius:12px;padding:16px;margin-bottom:16px;}
+ canvas{background:#05070f;border-radius:10px;display:block;margin:0 auto;}
+ .controls label{display:block;font-size:0.85rem;color:#9aa4c7;margin:10px 0 4px;}
+ input[type=range]{width:100%;}
+ .readout{display:flex;justify-content:space-between;font-size:0.9rem;margin-top:6px;color:#c3c9e8;}
+ button{background:#3d5afe;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:0.9rem;margin-top:10px;}
+ p.explain{font-size:0.85rem;color:#9aa4c7;line-height:1.5;}
+</style>
+</head>
+<body>
+<header>
+ <a href="../index.html">&larr; Back to Companion Home</a>
+</header>
+<main>
+ <h1>Kepler's Laws: Orbital Mechanics Visualizer</h1>
+ <div class="card">
+  <canvas id="orbitCanvas" width="340" height="340"></canvas>
+  <button id="toggleBtn">Pause</button>
+  <div class="readout"><span>Distance from focus (r/a)</span><span id="rReadout">1.00</span></div>
+  <div class="readout"><span>Relative speed (v/v-circular)</span><span id="vReadout">1.00</span></div>
+ </div>
+ <div class="card controls">
+  <label for="eccSlider">Eccentricity: <span id="eccVal">0.40</span></label>
+  <input type="range" id="eccSlider" min="0" max="0.85" step="0.01" value="0.40">
+  <label for="speedSlider">Animation speed</label>
+  <input type="range" id="speedSlider" min="0.2" max="3" step="0.1" value="1">
+ </div>
+ <div class="card">
+  <p class="explain">This visualizer shows Kepler's First and Second Laws. The orbit is an ellipse with the central body (the dot in the middle-ish area) at one focus, not the center. Watch how the orbiting body speeds up near the focus (perihelion) and slows down on the far side (aphelion) - that is Kepler's Second Law: a line from the focus to the body sweeps equal areas in equal time. Increasing eccentricity makes the ellipse more stretched and the speed difference more dramatic.</p>
+ </div>
+</main>
+<script>
+var canvas = document.getElementById('orbitCanvas');
+var ctx = canvas.getContext('2d');
+var W = canvas.width, H = canvas.height;
+var cx = W/2, cy = H/2;
+var a = 130;
+var e = 0.40;
+var M = 0;
+var playing = true;
+var speedFactor = 1;
+var n = 0.02;
+
+function solveKepler(Mval, ecc){
+  var E = Mval;
+  for(var i=0;i<8;i++){
+    E = E - (E - ecc*Math.sin(E) - Mval)/(1 - ecc*Math.cos(E));
+  }
+  return E;
+}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  var b = a*Math.sqrt(1-e*e);
+  var c = a*e;
+  var focusX = cx - c;
+  var focusY = cy;
+
+  ctx.strokeStyle = '#3a4478';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  for(var t=0;t<=360;t+=2){
+    var rad = t*Math.PI/180;
+    var ex = cx + a*Math.cos(rad);
+    var ey = cy + b*Math.sin(rad);
+    if(t===0) ctx.moveTo(ex,ey); else ctx.lineTo(ex,ey);
+  }
+  ctx.closePath();
+  ctx.stroke();
+
+  ctx.fillStyle = '#ffd166';
+  ctx.beginPath();
+  ctx.arc(focusX, focusY, 9, 0, Math.PI*2);
+  ctx.fill();
+
+  var E = solveKepler(M, e);
+  var px = cx + a*Math.cos(E);
+  var py = cy + b*Math.sin(E);
+
+  ctx.strokeStyle = '#4d5aa8';
+  ctx.beginPath();
+  ctx.moveTo(focusX, focusY);
+  ctx.lineTo(px, py);
+  ctx.stroke();
+
+  ctx.fillStyle = '#5ac8fa';
+  ctx.beginPath();
+  ctx.arc(px, py, 7, 0, Math.PI*2);
+  ctx.fill();
+
+  var r = a*(1 - e*Math.cos(E));
+  var rRatio = r/a;
+  var speedRatio = Math.sqrt(Math.max(0.0001, (2*a/r) - 1));
+  document.getElementById('rReadout').textContent = rRatio.toFixed(2);
+  document.getElementById('vReadout').textContent = speedRatio.toFixed(2);
+}
+
+function tick(){
+  if(playing){
+    M += n*speedFactor;
+    if(M > Math.PI*2) M -= Math.PI*2;
+  }
+  draw();
+  requestAnimationFrame(tick);
+}
+
+document.getElementById('eccSlider').addEventListener('input', function(ev){
+  e = parseFloat(ev.target.value);
+  document.getElementById('eccVal').textContent = e.toFixed(2);
+});
+document.getElementById('speedSlider').addEventListener('input', function(ev){
+  speedFactor = parseFloat(ev.target.value);
+});
+document.getElementById('toggleBtn').addEventListener('click', function(ev){
+  playing = !playing;
+  ev.target.textContent = playing ? 'Pause' : 'Play';
+});
+
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
